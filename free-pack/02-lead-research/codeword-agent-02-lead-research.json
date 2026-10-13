@@ -1,0 +1,497 @@
+{
+  "name": "Codeword Agent #2: Lead Research",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agent #2: Lead Research\n\n**Setup (5 minutes)**\n1. Fill in every \"FILL IN\" value in **Config: Your Business**.\n2. Optional: adjust **Config: Agent Settings**.\n3. Open **Claude** and pick your Anthropic credential.\n4. Open **Email Me the Briefs** and pick your Gmail credential.\n5. Click **Publish** (**Activate** in older n8n versions), then use the production URL from **Paste Your Leads**.\n\nThe agent reads each lead's homepage and Google News headlines, then Claude writes a brief from only that material. Nothing is sent to your leads.",
+        "width": 420,
+        "height": 500,
+        "color": 4
+      },
+      "id": "18d323e2-65a8-49b5-adfb-a004e463b208",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Lead Research",
+        "formDescription": "One lead per line: Company | website | person (person is optional). You get a research brief on each lead by email.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Leads",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "placeholder": "Acme Plumbing | acmeplumbing.com | Dana Lee\nBright Dental | brightdental.co"
+            },
+            {
+              "fieldLabel": "What are you offering them?",
+              "placeholder": "Optional. Defaults to what you do in Config: Your Business."
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Researching now. The briefs will arrive in your inbox in a few minutes."
+            }
+          }
+        }
+      },
+      "id": "fe419821-f662-4754-98f5-85428f17a141",
+      "name": "Paste Your Leads",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "a5458cf3-f009-4e73-b8a0-7f8892db4ce0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6635cbd4-8faf-416e-b6ec-ece2494d6fdb",
+              "name": "your_name",
+              "value": "FILL IN: Your name",
+              "type": "string"
+            },
+            {
+              "id": "a668f6b1-73d6-42e2-a9ad-ffb189f7aa7b",
+              "name": "your_email",
+              "value": "FILL IN: you@yourbusiness.com",
+              "type": "string"
+            },
+            {
+              "id": "bfb39fce-4eca-4abc-8e79-ca494616e6bc",
+              "name": "business_name",
+              "value": "FILL IN: Your business name",
+              "type": "string"
+            },
+            {
+              "id": "2b7794d0-32a7-4871-ad3a-d0722204f0a6",
+              "name": "what_you_do",
+              "value": "FILL IN: One or two sentences on what you sell and who it helps",
+              "type": "string"
+            },
+            {
+              "id": "1d3d2ce5-06ad-4a68-bfe8-9b9b057d4f15",
+              "name": "ideal_customer",
+              "value": "FILL IN: Who you want to work with (industry, size, role)",
+              "type": "string"
+            },
+            {
+              "id": "25d1dba7-31e0-4324-8dea-6295137456a3",
+              "name": "tone_of_voice",
+              "value": "Friendly, direct, plain English. No hype, no buzzwords.",
+              "type": "string"
+            },
+            {
+              "id": "8bcea27b-531d-49d3-b4b1-b1088296d760",
+              "name": "email_signature",
+              "value": "FILL IN: Your sign-off, e.g. Talk soon, Sam",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "306e7915-af99-4a77-939e-1f6107acd1af",
+      "name": "Config: Your Business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5b35ff9-803d-4bee-a62d-9333d8a8f285",
+              "name": "max_leads_per_run",
+              "value": 20,
+              "type": "number"
+            },
+            {
+              "id": "7c37cb14-e3dd-42f2-bc62-f61d7ec05252",
+              "name": "news_items_per_lead",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "001d776f-1799-4be2-b556-a619fb613abf",
+              "name": "news_region",
+              "value": "US",
+              "type": "string"
+            },
+            {
+              "id": "0832fe07-2e50-47b6-96cc-99065480682b",
+              "name": "opener_style",
+              "value": "One or two sentences. Specific to them, based on the research. No flattery, no fake familiarity.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e246970-65d2-4ee3-9333-89ac1a391667",
+      "name": "Config: Agent Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $('Paste Your Leads').first().json;\nconst biz = $('Config: Your Business').first().json;\nconst settings = $('Config: Agent Settings').first().json;\n\nconst leads = String(form.Leads || '')\n  .split('\\n')\n  .map((line) => line.trim())\n  .filter(Boolean)\n  .slice(0, Number(settings.max_leads_per_run) || 20)\n  .map((line) => {\n    const [company = '', website = '', person = ''] = line.split('|').map((s) => s.trim());\n    let url = website;\n    if (url && !/^https?:\\/\\//i.test(url)) url = 'https://' + url;\n    return { json: {\n      company,\n      website: url,\n      person,\n      offer: form['What are you offering them?'] || biz.what_you_do,\n    } };\n  });\n\nif (!leads.length) throw new Error('No leads found. Put one lead per line: Company | website | person');\nreturn leads;"
+      },
+      "id": "97c65573-e39e-4649-851d-ac99b7e3b1b8",
+      "name": "Split Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website || 'https://invalid.invalid' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; CodewordLeadResearch/1.0)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "8a6f5cef-8989-4d6f-b5b2-ccb1a6dff57e",
+      "name": "Fetch Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const decode = (s) => s\n  .replace(/&nbsp;/g, ' ')\n  .replace(/&quot;/g, '\"')\n  .replace(/&#39;|&#x27;|&apos;/g, \"'\")\n  .replace(/&lt;/g, '<')\n  .replace(/&gt;/g, '>')\n  .replace(/&amp;/g, '&');\nconst lead = $('Split Leads').item.json;\nconst html = typeof $json.data === 'string' ? $json.data : '';\nconst text = decode(html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim())\n  .slice(0, 5000);\nreturn { json: { ...lead, site_text: text, site_found: text.length > 200 } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "4aa1b4b9-5cfb-43ad-9b5c-75edd6c3ec21",
+      "name": "Clean Website Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://news.google.com/rss/search?q={{ encodeURIComponent('\"' + $json.company + '\"') }}&hl=en-{{ $('Config: Agent Settings').first().json.news_region }}&gl={{ $('Config: Agent Settings').first().json.news_region }}&ceid={{ $('Config: Agent Settings').first().json.news_region }}:en",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; CodewordLeadResearch/1.0)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "4f8d777c-8162-4988-9f15-85acceee82fc",
+      "name": "Fetch News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const decode = (s) => s\n  .replace(/&nbsp;/g, ' ')\n  .replace(/&quot;/g, '\"')\n  .replace(/&#39;|&#x27;|&apos;/g, \"'\")\n  .replace(/&lt;/g, '<')\n  .replace(/&gt;/g, '>')\n  .replace(/&amp;/g, '&');\nconst lead = $('Clean Website Text').item.json;\nconst max = Number($('Config: Agent Settings').first().json.news_items_per_lead) || 3;\nconst xml = typeof $json.data === 'string' ? $json.data : '';\nconst pick = (block, tag) => {\n  const m = block.match(new RegExp('<' + tag + '[^>]*>([\\\\s\\\\S]*?)<\\\\/' + tag + '>'));\n  return m ? decode(m[1].replace(/<!\\[CDATA\\[|\\]\\]>/g, '').trim()) : '';\n};\nconst news = (xml.match(/<item>[\\s\\S]*?<\\/item>/g) || []).slice(0, max).map((block) => ({\n  headline: pick(block, 'title'),\n  link: pick(block, 'link'),\n  date: pick(block, 'pubDate'),\n  source: pick(block, 'source'),\n}));\nreturn { json: { ...lead, news } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f7fe6236-5757-442f-9db5-85ad925ca753",
+      "name": "Parse News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead: {{ $json.company }}{{ $json.person ? ' (contact: ' + $json.person + ')' : '' }}\nWebsite: {{ $json.website || 'not given' }}\nWhat we want to offer them: {{ $json.offer }}\n\nWebsite text:\n\"\"\"\n{{ $json.site_text || '(could not read the website)' }}\n\"\"\"\n\nNews headlines (may include unrelated results):\n{{ $json.news.length ? $json.news.map((n, i) => (i + 1) + '. ' + n.headline + ' (' + n.source + ', ' + n.date + ')').join('\\n') : '(no news found)' }}\n\nReturn JSON in exactly this shape:\n{\n  \"what_they_do\": \"one or two sentences\",\n  \"recent_news\": [{ \"headline\": \"copied exactly from the list above\", \"why_it_matters\": \"one sentence\" }],\n  \"fit\": \"one or two sentences on how our offer could be relevant, or 'Unclear' if it is not obvious\",\n  \"opener\": \"a personalized first line for an outreach email. Style: {{ $('Config: Agent Settings').first().json.opener_style }}\"\n}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You research sales leads and write short, accurate briefs.\nYou work for {{ $('Config: Your Business').first().json.your_name }} at {{ $('Config: Your Business').first().json.business_name }}.\nWhat they do: {{ $('Config: Your Business').first().json.what_you_do }}\nTheir ideal customer: {{ $('Config: Your Business').first().json.ideal_customer }}\n\nRules you always follow:\n- Only use facts that appear in the input. If something is missing, say \"Not found\" or leave it out. Never invent names, numbers, dates, news, or quotes.\n- Never promise results, revenue, savings, or timelines, and never make income claims.\n- Write in this tone: {{ $('Config: Your Business').first().json.tone_of_voice }}\n- Reply with JSON only, no extra text.\n- Use only the website text and news headlines provided. If the website text is empty, say the site could not be read.\n- A news item only counts if it is clearly about this company. Skip headlines about a different company with a similar name."
+            }
+          ]
+        }
+      },
+      "id": "6b076e67-adf3-460a-b210-63a2b34f32cf",
+      "name": "Write Research Brief",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1500,
+          "temperature": 0.3
+        }
+      },
+      "id": "ef7c62a6-bb6a-4c2f-9458-e380e844e4c7",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1780,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseClaudeJson(text) {\n  const raw = String(text || '').trim();\n  const fenced = raw.match(/\\x60\\x60\\x60(?:json)?\\s*([\\s\\S]*?)\\x60\\x60\\x60/);\n  const candidate = fenced ? fenced[1] : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);\n  try {\n    return JSON.parse(candidate);\n  } catch (e) {\n    throw new Error('Claude did not return valid JSON. Raw reply: ' + raw.slice(0, 500));\n  }\n}\nfunction esc(s) {\n  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\n\nconst lead = $('Parse News').item.json;\nlet brief;\ntry {\n  brief = parseClaudeJson($json.text);\n} catch (e) {\n  return { json: { company: lead.company, ok: false, html: '<h3>' + esc(lead.company) + '</h3><p>Could not write a brief: ' + esc(e.message) + '</p><hr>' } };\n}\n\nconst newsHtml = (brief.recent_news || []).map((n) => {\n  const match = lead.news.find((x) => x.headline === n.headline);\n  const link = match ? ' <a href=\"' + esc(match.link) + '\">source</a>' : '';\n  return '<li>' + esc(n.headline) + link + '<br><i>' + esc(n.why_it_matters) + '</i></li>';\n}).join('');\n\nconst html = '<h3>' + esc(lead.company) + (lead.person ? ' / ' + esc(lead.person) : '') + '</h3>' +\n  (lead.website ? '<p><a href=\"' + esc(lead.website) + '\">' + esc(lead.website) + '</a>' + (lead.site_found ? '' : ' (site could not be read)') + '</p>' : '') +\n  '<p><b>What they do:</b> ' + esc(brief.what_they_do) + '</p>' +\n  '<p><b>Recent news:</b></p>' + (newsHtml ? '<ul>' + newsHtml + '</ul>' : '<p><i>Nothing relevant found</i></p>') +\n  '<p><b>Fit:</b> ' + esc(brief.fit) + '</p>' +\n  '<p><b>Opener:</b> ' + esc(brief.opener) + '</p><hr>';\n\nreturn { json: { company: lead.company, ok: true, html } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "9110a3b1-4bf9-4ecf-961d-58a86b4ab47d",
+      "name": "Format Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map((i) => i.json);\nconst html = '<p>Research briefs for ' + items.length + ' lead' + (items.length === 1 ? '' : 's') +\n  '. Check each opener against the source before you use it.</p><hr>' + items.map((i) => i.html).join('');\nreturn [{ json: { subject: 'Lead research: ' + items.map((i) => i.company).slice(0, 3).join(', ') + (items.length > 3 ? ' + ' + (items.length - 3) + ' more' : ''), html } }];"
+      },
+      "id": "4d5064e3-a32c-4842-bf45-c746e256e037",
+      "name": "Combine Into One Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Config: Your Business').first().json.your_email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "63f70af2-94bc-4b1a-a4ce-fc3e1ad8fe4c",
+      "name": "Email Me the Briefs",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2500,
+        300
+      ],
+      "webhookId": "5bb81d89-6041-463b-a0e8-5b758ae53f1b"
+    }
+  ],
+  "connections": {
+    "Paste Your Leads": {
+      "main": [
+        [
+          {
+            "node": "Config: Your Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Your Business": {
+      "main": [
+        [
+          {
+            "node": "Config: Agent Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Agent Settings": {
+      "main": [
+        [
+          {
+            "node": "Split Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Leads": {
+      "main": [
+        [
+          {
+            "node": "Fetch Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Website": {
+      "main": [
+        [
+          {
+            "node": "Clean Website Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Website Text": {
+      "main": [
+        [
+          {
+            "node": "Fetch News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch News": {
+      "main": [
+        [
+          {
+            "node": "Parse News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse News": {
+      "main": [
+        [
+          {
+            "node": "Write Research Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Research Brief",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Research Brief": {
+      "main": [
+        [
+          {
+            "node": "Format Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Brief": {
+      "main": [
+        [
+          {
+            "node": "Combine Into One Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Into One Email": {
+      "main": [
+        [
+          {
+            "node": "Email Me the Briefs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

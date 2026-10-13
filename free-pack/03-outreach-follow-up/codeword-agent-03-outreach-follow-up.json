@@ -1,0 +1,642 @@
+{
+  "name": "Codeword Agent #3: Outreach and Follow-up",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agent #3: Outreach and Follow-up\n\n**Setup (10 minutes)**\n1. Fill in every \"FILL IN\" value in **Config: Your Business**.\n2. Set your goal and follow-up timing in **Config: Agent Settings**.\n3. Pick your Anthropic credential in both Claude nodes.\n4. Pick your Gmail credential in the three Gmail nodes.\n5. Click **Publish** (**Activate** in older n8n versions). Add leads with the production URL from **Add a Lead** (the test URL does not save leads).\n\n**How it works:** every email is a Gmail draft. You send it. Each morning the agent checks Gmail: if the lead replied, it stops. If you sent the last email and enough days have passed, it drafts the next follow-up in the same thread. It stops after the max number of follow-ups.",
+        "width": 440,
+        "height": 640,
+        "color": 4
+      },
+      "id": "ec15ccd5-a192-40e0-a2da-437840b7730f",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Add a Lead for Outreach",
+        "formDescription": "Add one lead. The agent drafts a first email in your Gmail drafts. After you send it, it drafts follow-ups until they reply.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company"
+            },
+            {
+              "fieldLabel": "Why them",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "placeholder": "What you know about them and why you are reaching out. Paste a Lead Research brief here if you have one."
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Lead added. The first email is in your Gmail drafts."
+            }
+          }
+        }
+      },
+      "id": "1a055b55-6a41-4314-b0cc-83f9480a28ea",
+      "name": "Add a Lead",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "d64c752a-6140-4fa1-aa51-1b5ae9c6b884"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "eec6cfc0-8cf5-4a09-959f-dc2b93cc3c0c",
+      "name": "Every Morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ec5c536-d7c1-4818-9a76-ddadbbdcc8af",
+              "name": "your_name",
+              "value": "FILL IN: Your name",
+              "type": "string"
+            },
+            {
+              "id": "dfbf4fc8-e658-43e2-8ea1-908fba9071ae",
+              "name": "your_email",
+              "value": "FILL IN: you@yourbusiness.com",
+              "type": "string"
+            },
+            {
+              "id": "389117a8-194a-4232-9684-89cddce101fc",
+              "name": "business_name",
+              "value": "FILL IN: Your business name",
+              "type": "string"
+            },
+            {
+              "id": "e6e5319b-5f03-43ac-96e4-f3f049efd353",
+              "name": "what_you_do",
+              "value": "FILL IN: One or two sentences on what you sell and who it helps",
+              "type": "string"
+            },
+            {
+              "id": "edce1e4b-af7e-4aea-a99e-d7bfcfc33f3d",
+              "name": "ideal_customer",
+              "value": "FILL IN: Who you want to work with (industry, size, role)",
+              "type": "string"
+            },
+            {
+              "id": "021ce2e3-cf80-4b20-bfea-543f379a1351",
+              "name": "tone_of_voice",
+              "value": "Friendly, direct, plain English. No hype, no buzzwords.",
+              "type": "string"
+            },
+            {
+              "id": "82c7721d-b501-4bf2-9711-a8438cfe0689",
+              "name": "email_signature",
+              "value": "FILL IN: Your sign-off, e.g. Talk soon, Sam",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c94309e3-d2e0-4b82-adc7-64377806bdc2",
+      "name": "Config: Your Business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de90407e-90e0-4e13-b3f3-602f1ca65099",
+              "name": "outreach_goal",
+              "value": "Ask if they are open to a 15-minute call to see if this is useful for them.",
+              "type": "string"
+            },
+            {
+              "id": "3e02bc14-7a8a-4c07-8c8b-6a76b1b8f162",
+              "name": "follow_up_after_days",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "ea4f0fe3-218d-4ff5-b2f5-fb9bf91358ac",
+              "name": "max_follow_ups",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "36452dcc-a8b3-4d2d-b0fd-d5ed609ee4eb",
+              "name": "max_leads_checked_per_day",
+              "value": 40,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa3e01a6-e8ba-4d5b-8b32-95d46fc00120",
+      "name": "Config: Agent Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3a593106-ac2a-438f-a5c6-4bfb80048483",
+              "leftValue": "={{ $('Add a Lead').isExecuted }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "9873d849-b622-40c7-af85-10aa4fd984b4",
+      "name": "New Lead or Daily Check?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        680,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead name: {{ $('Add a Lead').first().json.Name }}\nCompany: {{ $('Add a Lead').first().json.Company || 'not given' }}\nWhy we are reaching out:\n\"\"\"\n{{ $('Add a Lead').first().json['Why them'] }}\n\"\"\"\n\nReturn JSON in exactly this shape:\n{ \"subject\": \"short, lowercase is fine, no clickbait\", \"body\": \"the email\" }",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You write first-touch cold outreach emails that sound like a real person wrote them.\nYou work for {{ $('Config: Your Business').first().json.your_name }} at {{ $('Config: Your Business').first().json.business_name }}.\nWhat they do: {{ $('Config: Your Business').first().json.what_you_do }}\nTheir ideal customer: {{ $('Config: Your Business').first().json.ideal_customer }}\n\nRules you always follow:\n- Only use facts that appear in the input. If something is missing, say \"Not found\" or leave it out. Never invent names, numbers, dates, news, or quotes.\n- Never promise results, revenue, savings, or timelines, and never make income claims.\n- Write in this tone: {{ $('Config: Your Business').first().json.tone_of_voice }}\n- Reply with JSON only, no extra text.\n- Plain text only. No links unless the lead context includes one. No attachments.\n- Keep it short: under 120 words for a first email, under 80 for a follow-up.\n- No fake urgency, no guilt-tripping, no \"just bumping this\", no claims about results other clients got.\n- Goal of the email: {{ $('Config: Agent Settings').first().json.outreach_goal }}\n- Sign off with: {{ $('Config: Your Business').first().json.email_signature }}"
+            }
+          ]
+        }
+      },
+      "id": "a2ee2a3c-e4da-47a6-a9ea-22e9f05997dc",
+      "name": "Write First Email",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        940,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 800,
+          "temperature": 0.5
+        }
+      },
+      "id": "ba254a45-2ada-4e24-abbe-d13906de3861",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        940,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseClaudeJson(text) {\n  const raw = String(text || '').trim();\n  const fenced = raw.match(/\\x60\\x60\\x60(?:json)?\\s*([\\s\\S]*?)\\x60\\x60\\x60/);\n  const candidate = fenced ? fenced[1] : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);\n  try {\n    return JSON.parse(candidate);\n  } catch (e) {\n    throw new Error('Claude did not return valid JSON. Raw reply: ' + raw.slice(0, 500));\n  }\n}\nfunction esc(s) {\n  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\nconst email = parseClaudeJson($json.text);\nconst lead = $('Add a Lead').first().json;\nreturn [{ json: { to: lead.Email.trim().toLowerCase(), subject: email.subject, body: email.body } }];"
+      },
+      "id": "62d15d7e-b991-4564-b540-b7468cbd6e27",
+      "name": "Prepare First Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "sendTo": "={{ $json.to }}"
+        }
+      },
+      "id": "35ddf41b-71e6-4307-bc36-46504586964a",
+      "name": "Draft First Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1400,
+        160
+      ],
+      "webhookId": "a9ae827c-48f3-4759-8f66-be551f63b932"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Add a Lead').first().json;\nconst first = $('Prepare First Email').first().json;\nconst store = $getWorkflowStaticData('global');\nstore.leads = store.leads || {};\nstore.leads[first.to] = {\n  name: lead.Name,\n  email: first.to,\n  company: lead.Company || '',\n  context: lead['Why them'],\n  subject: first.subject,\n  added_at: new Date().toISOString(),\n  last_draft_at: new Date().toISOString(),\n  status: 'active',\n};\nreturn [{ json: { saved: first.to, active_leads: Object.values(store.leads).filter((l) => l.status === 'active').length } }];"
+      },
+      "id": "ae038a3a-bdb8-4555-b2b8-c32dbaab474d",
+      "name": "Save Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst limit = Number($('Config: Agent Settings').first().json.max_leads_checked_per_day) || 40;\nconst leads = Object.values(store.leads || {})\n  .filter((l) => l.status === 'active')\n  .sort((a, b) => new Date(a.last_draft_at) - new Date(b.last_draft_at))\n  .slice(0, limit);\nif (!leads.length) return [];\nconst terms = leads.map((l) => 'from:' + l.email + ' to:' + l.email).join(' ');\nconst query = '{' + terms + '} newer_than:120d';\nreturn leads.map((l) => ({ json: { ...l, gmail_query: query } }));"
+      },
+      "id": "27afa08f-93f4-4fe4-bcd6-fde0d7ee89a7",
+      "name": "Load Active Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 500,
+        "simple": true,
+        "filters": {
+          "q": "={{ $json.gmail_query }}"
+        }
+      },
+      "id": "8bde6b06-d84f-4253-97ca-32c42bff24db",
+      "name": "Check Gmail for Sends and Replies",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1180,
+        560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "webhookId": "da6ccd96-b5cc-4aed-81ff-4400ae417d19"
+    },
+    {
+      "parameters": {
+        "jsCode": "const settings = $('Config: Agent Settings').first().json;\nconst store = $getWorkflowStaticData('global');\nconst leads = $('Load Active Leads').all().map((i) => i.json);\nconst messages = $input.all().map((i) => i.json).filter((m) => m && m.id);\n\nconst emailsIn = (v) => (JSON.stringify(v ?? '').toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}/g) || []);\nconst dateOf = (m) => {\n  if (m.internalDate) return new Date(Number(m.internalDate));\n  const d = m.Date || m.date || m.headers?.date;\n  return d ? new Date(d) : new Date(0);\n};\nconst labelsOf = (m) => m.labelIds || (m.labels || []).map((l) => l.id);\nconst DAY = 24 * 60 * 60 * 1000;\nconst out = [];\n\nfor (const lead of leads) {\n  const fromLead = messages.filter((m) => emailsIn(m.From ?? m.from).includes(lead.email) && !labelsOf(m).includes('SENT'));\n  const sent = messages\n    .filter((m) => labelsOf(m).includes('SENT') && emailsIn(m.To ?? m.to).includes(lead.email))\n    .sort((a, b) => dateOf(a) - dateOf(b));\n\n  if (fromLead.length) {\n    store.leads[lead.email].status = 'replied';\n    continue;\n  }\n  if (!sent.length) continue;\n\n  const followUpsSent = sent.length - 1;\n  if (followUpsSent >= Number(settings.max_follow_ups)) {\n    store.leads[lead.email].status = 'finished';\n    continue;\n  }\n\n  const lastSent = dateOf(sent[sent.length - 1]);\n  const pendingDraft = new Date(lead.last_draft_at) > lastSent;\n  const due = Date.now() - lastSent.getTime() >= Number(settings.follow_up_after_days) * DAY;\n  if (pendingDraft || !due) continue;\n\n  out.push({ json: {\n    ...lead,\n    follow_up_number: followUpsSent + 1,\n    is_last: followUpsSent + 1 >= Number(settings.max_follow_ups),\n    thread_id: sent[0].threadId,\n    days_since_last: Math.floor((Date.now() - lastSent.getTime()) / DAY),\n  } });\n}\nreturn out;"
+      },
+      "id": "b4fdbc4a-b706-4b13-8306-0ef75cb37276",
+      "name": "Pick Leads to Follow Up",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Lead name: {{ $json.name }}\nCompany: {{ $json.company || 'not given' }}\nOriginal subject: {{ $json.subject }}\nContext:\n\"\"\"\n{{ $json.context }}\n\"\"\"\nThis is follow-up {{ $json.follow_up_number }} of {{ $('Config: Agent Settings').first().json.max_follow_ups }}. {{ $json.days_since_last }} days since the last email. {{ $json.is_last ? 'This is the last one.' : '' }}\n\nReturn JSON in exactly this shape:\n{ \"body\": \"the follow-up email\" }",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You write short, polite follow-up emails to people who have not replied yet.\nYou work for {{ $('Config: Your Business').first().json.your_name }} at {{ $('Config: Your Business').first().json.business_name }}.\nWhat they do: {{ $('Config: Your Business').first().json.what_you_do }}\nTheir ideal customer: {{ $('Config: Your Business').first().json.ideal_customer }}\n\nRules you always follow:\n- Only use facts that appear in the input. If something is missing, say \"Not found\" or leave it out. Never invent names, numbers, dates, news, or quotes.\n- Never promise results, revenue, savings, or timelines, and never make income claims.\n- Write in this tone: {{ $('Config: Your Business').first().json.tone_of_voice }}\n- Reply with JSON only, no extra text.\n- Plain text only. No links unless the lead context includes one. No attachments.\n- Keep it short: under 120 words for a first email, under 80 for a follow-up.\n- No fake urgency, no guilt-tripping, no \"just bumping this\", no claims about results other clients got.\n- Goal of the email: {{ $('Config: Agent Settings').first().json.outreach_goal }}\n- Sign off with: {{ $('Config: Your Business').first().json.email_signature }}\n- Each follow-up adds one new, useful angle. Do not repeat the first email.\n- If this is the last follow-up, close the loop politely and make it easy to say \"not now\"."
+            }
+          ]
+        }
+      },
+      "id": "3b808e17-d640-4623-9866-e27e0d0d809c",
+      "name": "Write Follow-up",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1660,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 600,
+          "temperature": 0.5
+        }
+      },
+      "id": "d22f3b87-ae38-4299-ba6a-f2e70ccfb95a",
+      "name": "Claude (follow-ups)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1660,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseClaudeJson(text) {\n  const raw = String(text || '').trim();\n  const fenced = raw.match(/\\x60\\x60\\x60(?:json)?\\s*([\\s\\S]*?)\\x60\\x60\\x60/);\n  const candidate = fenced ? fenced[1] : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);\n  try {\n    return JSON.parse(candidate);\n  } catch (e) {\n    throw new Error('Claude did not return valid JSON. Raw reply: ' + raw.slice(0, 500));\n  }\n}\nfunction esc(s) {\n  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\nconst lead = $('Pick Leads to Follow Up').item.json;\nconst email = parseClaudeJson($json.text);\nreturn { json: { ...lead, body: email.body, reply_subject: /^re:/i.test(lead.subject) ? lead.subject : 'Re: ' + lead.subject } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "ad1d14ae-1237-48f9-a71c-69276d00373b",
+      "name": "Prepare Follow-up",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.reply_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "sendTo": "={{ $json.email }}",
+          "threadId": "={{ $json.thread_id }}"
+        }
+      },
+      "id": "24a96adf-6df3-4a4b-809f-b9c1b9ed352f",
+      "name": "Draft Follow-up",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2120,
+        560
+      ],
+      "webhookId": "ca0c4634-4b96-42fa-8e9c-1a05b0729b7a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst now = new Date().toISOString();\nfor (const item of $('Prepare Follow-up').all()) {\n  const lead = store.leads[item.json.email];\n  if (lead) lead.last_draft_at = now;\n}\nreturn [{ json: { follow_up_drafts_created: $('Prepare Follow-up').all().length } }];"
+      },
+      "id": "6b389c2a-bbe9-48f1-a64b-d8b67517dc98",
+      "name": "Update Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Add a Lead": {
+      "main": [
+        [
+          {
+            "node": "Config: Your Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Morning": {
+      "main": [
+        [
+          {
+            "node": "Config: Your Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Your Business": {
+      "main": [
+        [
+          {
+            "node": "Config: Agent Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Agent Settings": {
+      "main": [
+        [
+          {
+            "node": "New Lead or Daily Check?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Lead or Daily Check?": {
+      "main": [
+        [
+          {
+            "node": "Write First Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Active Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write First Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write First Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare First Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare First Email": {
+      "main": [
+        [
+          {
+            "node": "Draft First Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft First Email": {
+      "main": [
+        [
+          {
+            "node": "Save Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Active Leads": {
+      "main": [
+        [
+          {
+            "node": "Check Gmail for Sends and Replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Gmail for Sends and Replies": {
+      "main": [
+        [
+          {
+            "node": "Pick Leads to Follow Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Leads to Follow Up": {
+      "main": [
+        [
+          {
+            "node": "Write Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (follow-ups)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Follow-up",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Prepare Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Draft Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Follow-up": {
+      "main": [
+        [
+          {
+            "node": "Update Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
