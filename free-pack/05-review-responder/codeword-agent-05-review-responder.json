@@ -1,0 +1,407 @@
+{
+  "name": "Codeword Agent #5: Review Responder",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agent #5: Review Responder\n\n**Setup (5 minutes)**\n1. Fill in every \"FILL IN\" value in **Config: Your Business** and **Config: Agent Settings**.\n2. Open **Claude** and pick your Anthropic credential.\n3. Open **Email Me the Reply** and pick your Gmail credential.\n4. Click **Publish** (**Activate** in older n8n versions), then use the production URL from **Paste a Review**.\n\n**Optional:** if your review platform emails you new reviews, enable **New Review Email**, pick your Gmail credential, and adjust the search so it matches those emails.\n\nNothing is posted publicly. You get every reply by email and post it yourself.",
+        "width": 440,
+        "height": 520,
+        "color": 4
+      },
+      "id": "80ec393a-60ce-4f68-b91b-616557344505",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Review Responder",
+        "formDescription": "Paste a customer review. You get a reply draft by email. Negative or risky reviews are flagged for you to handle personally.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Platform",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Google"
+                  },
+                  {
+                    "option": "Yelp"
+                  },
+                  {
+                    "option": "Trustpilot"
+                  },
+                  {
+                    "option": "Facebook"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reviewer name",
+              "placeholder": "As shown on the review"
+            },
+            {
+              "fieldLabel": "Star rating",
+              "fieldType": "number",
+              "placeholder": "1 to 5. Leave blank if there is no rating."
+            },
+            {
+              "fieldLabel": "Review text",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Done. Check your inbox for the reply draft."
+            }
+          }
+        }
+      },
+      "id": "98cff9e2-ca64-48a0-9492-a36d3a315dfa",
+      "name": "Paste a Review",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "5f929f72-deca-4b03-8463-5f68f63a8fad"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "subject:(\"new review\" OR \"left a review\" OR \"wrote a review\" OR \"reviewed your\") newer_than:2d"
+        },
+        "options": {}
+      },
+      "id": "10a2d143-241b-4a3d-8918-f473abc15085",
+      "name": "New Review Email (optional)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        420
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromForm = $('Paste a Review').isExecuted;\nreturn $input.all().map((item) => {\n  const j = item.json;\n  if (fromForm) {\n    const rating = Number(j['Star rating']);\n    return { json: {\n      platform: j.Platform || 'Other',\n      reviewer: j['Reviewer name'] || null,\n      rating: Number.isFinite(rating) && rating > 0 ? rating : null,\n      review_text: j['Review text'] || '',\n      source: 'form',\n    } };\n  }\n  const from = JSON.stringify(j.from || j.From || '');\n  const platform = /google/i.test(from) ? 'Google' : /yelp/i.test(from) ? 'Yelp'\n    : /trustpilot/i.test(from) ? 'Trustpilot' : /facebook|meta/i.test(from) ? 'Facebook' : 'Other';\n  const text = String(j.text || j.snippet || '').slice(0, 6000);\n  const stars = text.match(/([1-5])\\s*(?:\\/\\s*5|stars?|★)/i);\n  return { json: {\n    platform,\n    reviewer: null,\n    rating: stars ? Number(stars[1]) : null,\n    review_text: text,\n    source: 'email: ' + (j.subject || j.Subject || ''),\n  } };\n});"
+      },
+      "id": "6ee20dd0-4cc0-4815-8de1-56b7f2b77289",
+      "name": "Normalize Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf274d8e-8f5a-4649-93f6-6e10ddf2113f",
+              "name": "your_name",
+              "value": "FILL IN: Your name",
+              "type": "string"
+            },
+            {
+              "id": "27b14b0a-48fa-4211-90d8-c250c1800581",
+              "name": "your_email",
+              "value": "FILL IN: you@yourbusiness.com",
+              "type": "string"
+            },
+            {
+              "id": "4217738f-a05d-4de1-80ba-1cea91c44b20",
+              "name": "business_name",
+              "value": "FILL IN: Your business name",
+              "type": "string"
+            },
+            {
+              "id": "0c7ca943-6fe3-459c-9240-0f18076b9451",
+              "name": "what_you_do",
+              "value": "FILL IN: One or two sentences on what you sell and who it helps",
+              "type": "string"
+            },
+            {
+              "id": "c4f67e37-01ac-4210-9a45-81600b766f91",
+              "name": "ideal_customer",
+              "value": "FILL IN: Who you want to work with (industry, size, role)",
+              "type": "string"
+            },
+            {
+              "id": "12f219e3-7851-4210-87c1-01e6bb4dae34",
+              "name": "tone_of_voice",
+              "value": "Friendly, direct, plain English. No hype, no buzzwords.",
+              "type": "string"
+            },
+            {
+              "id": "3bd0e110-2f85-44c1-9a92-86a2fb09303e",
+              "name": "email_signature",
+              "value": "FILL IN: Your sign-off, e.g. Talk soon, Sam",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f42d40f5-31c9-4a19-a3cf-41089d98acd0",
+      "name": "Config: Your Business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23b46948-99f1-4179-9ce4-eff92a1a364a",
+              "name": "flag_at_or_below_stars",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "adb59673-49b0-492d-ad72-b3b125185dbe",
+              "name": "always_flag_words",
+              "value": "refund, lawyer, legal, sue, unsafe, sick, injury, scam, police, health department, discrimination",
+              "type": "string"
+            },
+            {
+              "id": "260a80a5-0ead-413e-8785-84aaf4a6d7e7",
+              "name": "reply_length",
+              "value": "2 to 4 sentences",
+              "type": "string"
+            },
+            {
+              "id": "eed1043f-cd22-47e8-af27-be02cc953f06",
+              "name": "reply_sign_off",
+              "value": "FILL IN: e.g. Thanks again, the team at Sunrise Bakery",
+              "type": "string"
+            },
+            {
+              "id": "2935e851-1868-446d-b976-e6d99f99a8aa",
+              "name": "contact_for_issues",
+              "value": "FILL IN: where unhappy customers can reach you, e.g. support@yourbusiness.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cf4d0061-dea2-491e-8dde-b24ad857d273",
+      "name": "Config: Agent Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Platform: {{ $('Normalize Review').item.json.platform }}\nReviewer: {{ $('Normalize Review').item.json.reviewer || 'not given (use the name from the review text if there is one)' }}\nStar rating: {{ $('Normalize Review').item.json.rating ?? 'not given' }}\nReview:\n\"\"\"\n{{ $('Normalize Review').item.json.review_text }}\n\"\"\"\n\nReturn JSON in exactly this shape:\n{\n  \"sentiment\": \"positive | mixed | negative\",\n  \"needs_human\": true or false,\n  \"reason\": \"one sentence on why it does or does not need a human\",\n  \"reply\": \"the public reply, signed off with: {{ $('Config: Agent Settings').first().json.reply_sign_off }}\"\n}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You write public replies to customer reviews for a business.\nYou work for {{ $('Config: Your Business').first().json.your_name }} at {{ $('Config: Your Business').first().json.business_name }}.\nWhat they do: {{ $('Config: Your Business').first().json.what_you_do }}\nTheir ideal customer: {{ $('Config: Your Business').first().json.ideal_customer }}\n\nRules you always follow:\n- Only use facts that appear in the input. If something is missing, say \"Not found\" or leave it out. Never invent names, numbers, dates, news, or quotes.\n- Never promise results, revenue, savings, or timelines, and never make income claims.\n- Write in this tone: {{ $('Config: Your Business').first().json.tone_of_voice }}\n- Reply with JSON only, no extra text.\n- Never admit legal fault, offer refunds, discounts, or compensation, or mention private customer details.\n- For negative reviews: thank them, acknowledge the specific issue, and invite them to continue privately at {{ $('Config: Agent Settings').first().json.contact_for_issues }}.\n- Reply length: {{ $('Config: Agent Settings').first().json.reply_length }}."
+            }
+          ]
+        }
+      },
+      "id": "0ac538ae-a06d-4f46-a6d7-6b824a37d13d",
+      "name": "Draft Reply",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 1000,
+          "temperature": 0.4
+        }
+      },
+      "id": "e6142534-daba-4e31-8fe9-3484212dda4c",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseClaudeJson(text) {\n  const raw = String(text || '').trim();\n  const fenced = raw.match(/\\x60\\x60\\x60(?:json)?\\s*([\\s\\S]*?)\\x60\\x60\\x60/);\n  const candidate = fenced ? fenced[1] : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);\n  try {\n    return JSON.parse(candidate);\n  } catch (e) {\n    throw new Error('Claude did not return valid JSON. Raw reply: ' + raw.slice(0, 500));\n  }\n}\nfunction esc(s) {\n  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\n\nconst settings = $('Config: Agent Settings').first().json;\nconst review = $('Normalize Review').item.json;\nconst ai = parseClaudeJson($json.text);\n\nconst words = String(settings.always_flag_words || '').split(',').map((w) => w.trim().toLowerCase()).filter(Boolean);\nconst hitWords = words.filter((w) => review.review_text.toLowerCase().includes(w));\nconst lowStars = review.rating !== null && review.rating <= Number(settings.flag_at_or_below_stars);\nconst needsHuman = Boolean(ai.needs_human) || ai.sentiment === 'negative' || lowStars || hitWords.length > 0;\n\nconst reasons = [];\nif (lowStars) reasons.push(review.rating + ' stars');\nif (hitWords.length) reasons.push('mentions: ' + hitWords.join(', '));\nif (ai.reason) reasons.push(ai.reason);\n\nconst tag = needsHuman ? '[NEEDS YOU]' : '[READY TO POST]';\nconst stars = review.rating ? review.rating + '-star ' : '';\nconst html = (needsHuman\n    ? '<p><b>This review needs you.</b> Read it and decide how to respond before posting anything.</p>'\n    : '<p>This reply looks safe to post. Give it a quick read first.</p>') +\n  '<p><b>Why:</b> ' + esc(reasons.join(' / ') || 'n/a') + '</p>' +\n  '<h3>Review (' + esc(review.platform) + ', ' + esc(review.rating ?? 'no') + ' stars)</h3>' +\n  '<blockquote>' + esc(review.review_text).replace(/\\n/g, '<br>') + '</blockquote>' +\n  '<h3>Suggested reply</h3><p>' + esc(ai.reply).replace(/\\n/g, '<br>') + '</p>' +\n  '<p><i>Source: ' + esc(review.source) + '</i></p>';\n\nreturn { json: {\n  subject: tag + ' ' + stars + review.platform + ' review from ' + (review.reviewer || 'a customer'),\n  html,\n  needs_human: needsHuman,\n} };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "27203bb5-dd19-405e-8657-84a769dc22fc",
+      "name": "Decide and Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Config: Your Business').first().json.your_email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "acb655a6-4a04-45b7-8323-868a6c644694",
+      "name": "Email Me the Reply",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1460,
+        300
+      ],
+      "webhookId": "9dabc5e3-5d08-4942-b92c-51ff0231337b"
+    }
+  ],
+  "connections": {
+    "Paste a Review": {
+      "main": [
+        [
+          {
+            "node": "Normalize Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Review Email (optional)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Review": {
+      "main": [
+        [
+          {
+            "node": "Config: Your Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Your Business": {
+      "main": [
+        [
+          {
+            "node": "Config: Agent Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Agent Settings": {
+      "main": [
+        [
+          {
+            "node": "Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Draft Reply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Reply": {
+      "main": [
+        [
+          {
+            "node": "Decide and Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide and Format": {
+      "main": [
+        [
+          {
+            "node": "Email Me the Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

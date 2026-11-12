@@ -1,0 +1,342 @@
+{
+  "name": "Codeword Agent #4: Meeting Notes to Action Items",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Agent #4: Meeting Notes to Action Items\n\n**Setup (5 minutes)**\n1. Open **Config: Your Business** and replace every \"FILL IN\" value.\n2. Optional: adjust **Config: Agent Settings**.\n3. Open **Claude** and pick your Anthropic credential.\n4. Open both Gmail nodes and pick your Gmail credential.\n5. Click **Publish** (**Activate** in older n8n versions), then open the production URL from **Paste a Meeting Transcript**.\n\nNothing is sent to attendees. The follow-up is saved as a Gmail draft for you to review.",
+        "width": 420,
+        "height": 460,
+        "color": 4
+      },
+      "id": "fcbd06a8-3d17-4fea-90e3-8c8fc559f585",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Meeting Notes to Action Items",
+        "formDescription": "Paste a call transcript. You get the summary and action items by email, plus a follow-up email saved as a Gmail draft.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Meeting title",
+              "placeholder": "e.g. Discovery call with Acme",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Attendee emails",
+              "placeholder": "Comma separated. Leave blank to draft the follow-up to yourself."
+            },
+            {
+              "fieldLabel": "Transcript",
+              "fieldType": "textarea",
+              "placeholder": "Paste the full transcript (Zoom, Meet, Fathom, Otter, etc.)",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Got it. Check your inbox for the notes and your Gmail drafts for the follow-up."
+            }
+          }
+        }
+      },
+      "id": "92ab7640-f2ad-4025-b7d1-05d5f9484f01",
+      "name": "Paste a Meeting Transcript",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "1c9918a7-de28-4601-ae68-37f8f3484b9c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0bb2ab49-10cd-485d-8246-70c57a0285bf",
+              "name": "your_name",
+              "value": "FILL IN: Your name",
+              "type": "string"
+            },
+            {
+              "id": "9602acde-a32d-4db8-a2dc-dce55385d801",
+              "name": "your_email",
+              "value": "FILL IN: you@yourbusiness.com",
+              "type": "string"
+            },
+            {
+              "id": "f4f11e9b-da51-4e71-bdf0-48740e10501d",
+              "name": "business_name",
+              "value": "FILL IN: Your business name",
+              "type": "string"
+            },
+            {
+              "id": "a57a2315-98c0-4bfb-8a30-f5cbd4847190",
+              "name": "what_you_do",
+              "value": "FILL IN: One or two sentences on what you sell and who it helps",
+              "type": "string"
+            },
+            {
+              "id": "fc2d87e8-5b62-48a1-bad2-0e387cd7b951",
+              "name": "ideal_customer",
+              "value": "FILL IN: Who you want to work with (industry, size, role)",
+              "type": "string"
+            },
+            {
+              "id": "3c88561e-0421-4381-9f06-0f434f322360",
+              "name": "tone_of_voice",
+              "value": "Friendly, direct, plain English. No hype, no buzzwords.",
+              "type": "string"
+            },
+            {
+              "id": "359d6542-f07b-4f97-bce5-16ec395d3125",
+              "name": "email_signature",
+              "value": "FILL IN: Your sign-off, e.g. Talk soon, Sam",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a976bee8-a171-424d-8b63-b98f3f826d9b",
+      "name": "Config: Your Business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "866f52c2-20a0-4662-962f-0edf6061f60f",
+              "name": "max_summary_bullets",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "ffa3906c-8734-4ca0-86b3-bf0e0575bfb3",
+              "name": "follow_up_goal",
+              "value": "Recap what was agreed, list next steps with owners, and confirm the next meeting if one was mentioned.",
+              "type": "string"
+            },
+            {
+              "id": "27feeb62-12f1-4d70-b980-9cdb65a64550",
+              "name": "include_open_questions",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0a9526f4-437e-4836-aaa3-440664094e26",
+      "name": "Config: Agent Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Meeting title: {{ $('Paste a Meeting Transcript').first().json['Meeting title'] }}\n\nTranscript:\n\"\"\"\n{{ $('Paste a Meeting Transcript').first().json.Transcript }}\n\"\"\"\n\nReturn JSON in exactly this shape:\n{\n  \"summary\": [\"up to {{ $('Config: Agent Settings').first().json.max_summary_bullets }} short bullets\"],\n  \"decisions\": [\"things that were agreed\"],\n  \"action_items\": [{ \"task\": \"\", \"owner\": \"\", \"due\": \"\" }],\n  \"open_questions\": [\"things still unresolved\"],\n  \"follow_up_email\": { \"subject\": \"\", \"body\": \"plain text, signed off with: {{ $('Config: Your Business').first().json.email_signature }}\" }\n}\nFollow-up email goal: {{ $('Config: Agent Settings').first().json.follow_up_goal }}",
+        "hasOutputParser": false,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You turn meeting transcripts into clear notes and a follow-up email.\nYou work for {{ $('Config: Your Business').first().json.your_name }} at {{ $('Config: Your Business').first().json.business_name }}.\nWhat they do: {{ $('Config: Your Business').first().json.what_you_do }}\nTheir ideal customer: {{ $('Config: Your Business').first().json.ideal_customer }}\n\nRules you always follow:\n- Only use facts that appear in the input. If something is missing, say \"Not found\" or leave it out. Never invent names, numbers, dates, news, or quotes.\n- Never promise results, revenue, savings, or timelines, and never make income claims.\n- Write in this tone: {{ $('Config: Your Business').first().json.tone_of_voice }}\n- Reply with JSON only, no extra text.\n- An action item owner must be a person named in the transcript. If it is unclear, use \"Unassigned\".\n- A due date must be stated in the transcript. Otherwise use \"Not set\"."
+            }
+          ]
+        }
+      },
+      "id": "75de14b5-e5d9-404c-8847-29229b626845",
+      "name": "Extract Notes and Actions",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 3000,
+          "temperature": 0.2
+        }
+      },
+      "id": "987a2d11-fa32-425c-bb4c-78bb6cfd9fc5",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        680,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseClaudeJson(text) {\n  const raw = String(text || '').trim();\n  const fenced = raw.match(/\\x60\\x60\\x60(?:json)?\\s*([\\s\\S]*?)\\x60\\x60\\x60/);\n  const candidate = fenced ? fenced[1] : raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1);\n  try {\n    return JSON.parse(candidate);\n  } catch (e) {\n    throw new Error('Claude did not return valid JSON. Raw reply: ' + raw.slice(0, 500));\n  }\n}\nfunction esc(s) {\n  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n}\n\nconst notes = parseClaudeJson($input.first().json.text);\nconst form = $('Paste a Meeting Transcript').first().json;\nconst biz = $('Config: Your Business').first().json;\nconst settings = $('Config: Agent Settings').first().json;\n\nconst list = (items) => (items && items.length)\n  ? '<ul>' + items.map((i) => '<li>' + esc(i) + '</li>').join('') + '</ul>'\n  : '<p><i>None</i></p>';\nconst actions = (notes.action_items || []).length\n  ? '<table border=\"1\" cellpadding=\"6\" cellspacing=\"0\"><tr><th>Task</th><th>Owner</th><th>Due</th></tr>' +\n    notes.action_items.map((a) => '<tr><td>' + esc(a.task) + '</td><td>' + esc(a.owner) + '</td><td>' + esc(a.due) + '</td></tr>').join('') +\n    '</table>'\n  : '<p><i>No action items found</i></p>';\n\nlet html = '<h2>' + esc(form['Meeting title']) + '</h2>' +\n  '<h3>Summary</h3>' + list(notes.summary) +\n  '<h3>Decisions</h3>' + list(notes.decisions) +\n  '<h3>Action items</h3>' + actions;\nif (settings.include_open_questions) html += '<h3>Open questions</h3>' + list(notes.open_questions);\nhtml += '<p>The follow-up email is saved in your Gmail drafts. Review it before sending.</p>';\n\nconst attendees = String(form['Attendee emails'] || '').split(',').map((s) => s.trim()).filter(Boolean).join(', ');\n\nreturn [{\n  json: {\n    notes_subject: 'Meeting notes: ' + form['Meeting title'],\n    notes_html: html,\n    follow_up_to: attendees || biz.your_email,\n    follow_up_subject: notes.follow_up_email?.subject || ('Follow-up: ' + form['Meeting title']),\n    follow_up_body: notes.follow_up_email?.body || '',\n  },\n}];"
+      },
+      "id": "bd364328-c26b-440a-bf2b-9fd2e07b12bd",
+      "name": "Format Notes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Config: Your Business').first().json.your_email }}",
+        "subject": "={{ $json.notes_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.notes_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b3330bd5-96bd-4c40-b7ad-a9d99361a65c",
+      "name": "Email Me the Notes",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        300
+      ],
+      "webhookId": "b06f005e-4c80-42bb-8a8e-d104e46ebad3"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Format Notes').first().json.follow_up_subject }}",
+        "emailType": "text",
+        "message": "={{ $('Format Notes').first().json.follow_up_body }}",
+        "options": {
+          "sendTo": "={{ $('Format Notes').first().json.follow_up_to }}"
+        }
+      },
+      "id": "0b83393b-5cf0-4b0e-a36c-e0532789d3c5",
+      "name": "Draft the Follow-up",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        300
+      ],
+      "webhookId": "5622f50d-9ba3-4b69-ba18-808ebc76cd7f"
+    }
+  ],
+  "connections": {
+    "Paste a Meeting Transcript": {
+      "main": [
+        [
+          {
+            "node": "Config: Your Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Your Business": {
+      "main": [
+        [
+          {
+            "node": "Config: Agent Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config: Agent Settings": {
+      "main": [
+        [
+          {
+            "node": "Extract Notes and Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Notes and Actions",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Notes and Actions": {
+      "main": [
+        [
+          {
+            "node": "Format Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notes": {
+      "main": [
+        [
+          {
+            "node": "Email Me the Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Me the Notes": {
+      "main": [
+        [
+          {
+            "node": "Draft the Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
